@@ -275,7 +275,7 @@ LONG FightWindowPaint(HWND hwnd)
 		CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Consolas"));
 
 
-	wsprintf(debug_info, "DEBUG_INFO: objects count: %d\n 得分：0x%p", num, get_sorce());
+	wsprintf(debug_info, "DEBUG_INFO: objects count: %d\n 得分：0x%p", num, get_score());
 	SelectObject(hdcMem, hFont);
 	SetTextColor(hdcMem, RGB(255, 0, 0));
 	TextOut(hdcMem, 10, 10, debug_info, strlen(debug_info));

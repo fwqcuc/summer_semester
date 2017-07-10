@@ -145,9 +145,7 @@ int WINAPI WinMain(
 		return -1;
 	}
 	// 窗口注册成功，继续运行。
-
-
-	// Create the main window. 
+	// 创建主窗口。
 
 	hwnd = CreateWindow(
 		"MainWClass",			// 窗口类名，必须是已经注册了的窗口类
@@ -183,7 +181,7 @@ int WINAPI WinMain(
 	*
 	* Windows窗口应用程序是一种消息驱动的程序框架。
 	* Windows窗口应用程序运行以后，其主线程就一直处于
-	* "等待消息--获取消息--效应消息" 的循环之中，直到程序退出。
+	* "等待消息--获取消息--响应消息" 的循环之中，直到程序退出。
 	*
 	* 所谓消息是Windows系统特有的一种系统对象和机制，
 	* 是操作系统对某些系统状态（如时钟）和用户操作（如鼠标点击）产生的系统中断进行封装以后，
@@ -194,7 +192,25 @@ int WINAPI WinMain(
 	*******************************************************************************/
 
 
-	// 以下进入消息循环。获取消息--翻译消息--分配消息（由窗口的消息处理函数来处理消息）
+	/*******************************************************************************
+	* 程序运行以后，进过了注册窗口类、创建主窗口这个两个步骤以后，进入到了这个循环中。
+	* 这个循环称为消息循环，此后程序就一直处于“接收消息-处理消息”的循环中，直到程序退出。
+	* Windows系统为每一个窗口程序维护一个消息队列，消息队列是系统内部的数据结构，应用程序并不需要维护
+	* 应用程序只需要调用 GetMessage API函数，从消息队列中获得消息，
+	* 然后调用 TranslateMessage 和 DispatchMessage，进行消息的处理。
+	* 当有事件发生的时候，系统会自动把消息放入到消息队列。队列有排队机制，因此可以适应消息的随机达到。
+	* 当队列为空的时候，GetMessage 函数不返回，直到有消息。
+	* DispatchMessage 函数会调用 注册窗口类时设置的回调函数。
+	* wc.lpfnWndProc = MainWndProc; 
+	* 操作系统的代码调用了应用程序的函数，这种调用方式称为回调，必须通过函数指针变量来实现。
+	* 
+	* 所以后面的程序功能，主要都写到了 MainWndProc 中，
+	* 消息循环的代码反而在几乎所有的应用程序中都是固定的模式了。
+	* 
+	* 所有的鼠标键盘操作、计时器、以及其他一千种左右的事件都会被处理为消息。
+	*******************************************************************************/
+
+
 	while ((fGotMessage = GetMessage(&msg, (HWND)NULL, 0, 0)) != 0
 		&& fGotMessage != -1)
 	{
@@ -221,7 +237,7 @@ void GamePaint(HWND hwnd)
 	* 3、绘制操作：即在DC上使用被选择如DC中的GDI对象绘制图形、线条、文字等。
 	*      如LineTo画出线条、Ellipse画出(椭)圆、Rectangle画出矩形、TextOut输出文字
 	*
-	* 使用GDI输出各类图像有其特定的流程，如下:
+	* 使用GDI输出各类图像有其特定的流程，如下代码所示。
 	*******************************************************************************/
 
 	HPEN hpen;
@@ -248,6 +264,7 @@ void GamePaint(HWND hwnd)
 
 	hdc = GetDC(hwnd);
 
+	// 这两个函数的调用非常重要，决定了程序运行的流畅度，不会闪烁。
 	// 注意 CreateCompatibleDC 中的这一段话：
 	// Before an application can use a memory DC for drawing operations, 
 	// it must select a bitmap of the correct width and height into the DC. 
@@ -284,7 +301,9 @@ void GamePaint(HWND hwnd)
 
 	lpFood = GetFood();
 
-	// （椭）圆形，使用上面选择的PEN勾勒边框，BRUSH填充
+	// 画矩形，使用上面选择的PEN勾勒边框，BRUSH填充内部
+	// 由于Select的是一个PS_NULL的PEN，所以边框看不见。
+	// 如果要画（椭）圆形，用Ellipse函数，参数为外接矩形四界。
 	Rectangle(hdcmem,
 		lpFood->x * CELL_PIXEL + rectBoundary.left,
 		lpFood->y * CELL_PIXEL + rectBoundary.top,
@@ -338,7 +357,7 @@ void GamePaint(HWND hwnd)
 	if (hOldFont = (HFONT)SelectObject(hdcmem, hFont))
 	{
 		CHAR szSourceInfo[1024];
-		wsprintf(szSourceInfo, "Sorce %d level %d", GetScore(), GetLevel());
+		wsprintf(szSourceInfo, "Score %d level %d", GetScore(), GetLevel());
 		// 设置输出颜色
 		SetTextColor(hdcmem, COLOR_TEXT);
 		// 输出字符串。
